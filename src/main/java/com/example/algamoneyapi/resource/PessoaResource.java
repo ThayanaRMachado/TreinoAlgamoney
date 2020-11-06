@@ -4,7 +4,6 @@ import java.net.URI;
 import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -34,8 +33,14 @@ public class PessoaResource {
 	
 	@PostMapping
 	@ResponseStatus(value = HttpStatus.CREATED)
-	public void criar(@RequestBody Pessoa pessoa) {
-		pessoaRepository.save(pessoa);
+	public ResponseEntity<Pessoa> criar(@RequestBody Pessoa pessoa, HttpServletResponse response) {
+		Pessoa pessoaSalva = pessoaRepository.save(pessoa);
+		
+		URI uri = ServletUriComponentsBuilder.fromCurrentRequestUri().path("/codigo")
+				.buildAndExpand(pessoaSalva.getCodigo()).toUri();
+			response.setHeader("Location", uri.toASCIIString());
+			
+			return ResponseEntity.created(uri).body(pessoaSalva);
 	}
 }
 
