@@ -8,6 +8,7 @@ import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.algamoneyapi.event.RecursoCriadoEvent;
 import com.example.algamoneyapi.model.Lancamento;
 import com.example.algamoneyapi.repository.LancamentoRepository;
+import com.example.algamoneyapi.service.LancamentoService;
+import com.example.algamoneyapi.service.exception.PessoaInexistenteOuInativaException;
 
 @RestController
 @RequestMapping("/lancamentos")
@@ -30,7 +33,13 @@ public class LancamentoResource {
 	
 	@Autowired
 	private ApplicationEventPublisher publisher;
-
+	
+	@Autowired
+	private LancamentoService lancamentoService;
+	
+	@Autowired
+	private MessageSource messageSource;
+	
 	@GetMapping
 	public List<Lancamento> listar() {
 		return lancamentoRepository.findAll();
@@ -43,8 +52,8 @@ public class LancamentoResource {
 	}
 	
 	@PostMapping
-	public ResponseEntity<Lancamento> criar(@Valid @RequestBody Lancamento lancamento, HttpServletResponse response) {
-		Lancamento lancamentoSalvo = lancamentoRepository.save(lancamento);
+	public ResponseEntity<Lancamento> criar(@Valid @RequestBody Lancamento lancamento, HttpServletResponse response) throws PessoaInexistenteOuInativaException {
+		Lancamento lancamentoSalvo = lancamentoService.salvar(lancamento);
 		publisher.publishEvent(new RecursoCriadoEvent(this, response, lancamentoSalvo.getCodigo()));
 		return ResponseEntity.status(HttpStatus.CREATED).body(lancamentoSalvo);
 	}
